@@ -1,5 +1,6 @@
 const express = require("express");
 const Joi = require("joi");
+const authMiddleware = require("../../middlewares/authMiddleware");
 
 const schema = Joi.object({
   name: Joi.string().min(3).max(30).required().messages({
@@ -21,6 +22,7 @@ const updateFavoriteSchema = Joi.object({
 });
 
 const router = express.Router();
+router.use(authMiddleware);
 const {
   listContacts,
   getContactById,
@@ -28,7 +30,7 @@ const {
   removeContact,
   updateContact,
   updateFavoriteStatus,
-} = require("../../models/contacts");
+} = require("../../controllers/contacts");
 
 router.get("/", async (req, res, next) => {
   try {
@@ -61,7 +63,7 @@ router.post("/", async (req, res, next) => {
   }
   const { name, email, phone } = req.body;
   try {
-    const newContact = await addContact({ name, email, phone });
+    const newContact = await addContact({ name, email, phone }, req.user._id);
     res.status(201).json(newContact);
   } catch (error) {
     next(error);
