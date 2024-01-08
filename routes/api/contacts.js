@@ -34,7 +34,7 @@ const {
 
 router.get("/", async (req, res, next) => {
   try {
-    const contacts = await listContacts();
+    const contacts = await listContacts(req.user._id);
     res.status(200).json(contacts);
   } catch (error) {
     next(error);
@@ -44,7 +44,7 @@ router.get("/", async (req, res, next) => {
 router.get("/:contactId", async (req, res, next) => {
   const { contactId } = req.params;
   try {
-    const contact = await getContactById(contactId);
+    const contact = await getContactById(contactId, req.user._id);
     if (contact) {
       res.status(200).json(contact);
     } else {
@@ -94,11 +94,15 @@ router.put("/:contactId", async (req, res, next) => {
     return;
   }
   try {
-    const updatedContact = await updateContact(contactId, {
-      name,
-      email,
-      phone,
-    });
+    const updatedContact = await updateContact(
+      contactId,
+      {
+        name,
+        email,
+        phone,
+      },
+      req.user._id
+    );
     if (updatedContact) {
       res.status(200).json(updatedContact);
     } else {
@@ -117,7 +121,11 @@ router.patch("/:contactId/favorite", async (req, res, next) => {
     return;
   }
   try {
-    const updatedContact = await updateFavoriteStatus(contactId, req.body);
+    const updatedContact = await updateFavoriteStatus(
+      contactId,
+      req.body,
+      req.user._id
+    );
     if (updatedContact) {
       res.status(200).json(updatedContact);
     } else {

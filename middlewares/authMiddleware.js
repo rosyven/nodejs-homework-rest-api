@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = process.env;
 
-const { User } = require("../models/user");
+const User = require("../models/user");
 
 const authMiddleware = async (req, res, next) => {
   const { authorization = "" } = req.headers;
@@ -20,7 +20,8 @@ const authMiddleware = async (req, res, next) => {
     }
     req.user = user;
     next();
-  } catch {
+  } catch (error) {
+    console.error(error);
     return res.status(401).json({ message: "Unauthorized!!!" });
   }
 };
