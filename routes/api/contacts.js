@@ -1,5 +1,6 @@
 const express = require("express");
 const Joi = require("joi");
+const authMiddleware = require("../../middlewares/authMiddleware");
 
 const schema = Joi.object({
   name: Joi.string().min(3).max(30).required().messages({
@@ -21,6 +22,7 @@ const updateFavoriteSchema = Joi.object({
 });
 
 const router = express.Router();
+router.use(authMiddleware);
 const {
   listContacts,
   getContactById,
@@ -28,11 +30,11 @@ const {
   removeContact,
   updateContact,
   updateFavoriteStatus,
-} = require("../../models/contacts");
+} = require("../../controllers/contacts");
 
 router.get("/", async (req, res, next) => {
   try {
-    const contacts = await listContacts();
+    const contacts = await listContacts(req.user._id);
     res.status(200).json(contacts);
   } catch (error) {
     next(error);
@@ -42,7 +44,7 @@ router.get("/", async (req, res, next) => {
 router.get("/:contactId", async (req, res, next) => {
   const { contactId } = req.params;
   try {
-    const contact = await getContactById(contactId);
+    const contact = await getContactById(contactId, req.user._id);
     if (contact) {
       res.status(200).json(contact);
     } else {
@@ -61,7 +63,7 @@ router.post("/", async (req, res, next) => {
   }
   const { name, email, phone } = req.body;
   try {
-    const newContact = await addContact({ name, email, phone });
+    const newContact = await addContact({ name, email, phone }, req.user._id);
     res.status(201).json(newContact);
   } catch (error) {
     next(error);
@@ -92,11 +94,15 @@ router.put("/:contactId", async (req, res, next) => {
     return;
   }
   try {
-    const updatedContact = await updateContact(contactId, {
-      name,
-      email,
-      phone,
-    });
+    const updatedContact = await updateContact(
+      contactId,
+      {
+        name,
+        email,
+        phone,
+      },
+      req.user._id
+    );
     if (updatedContact) {
       res.status(200).json(updatedContact);
     } else {
@@ -115,7 +121,11 @@ router.patch("/:contactId/favorite", async (req, res, next) => {
     return;
   }
   try {
-    const updatedContact = await updateFavoriteStatus(contactId, req.body);
+    const updatedContact = await updateFavoriteStatus(
+      contactId,
+      req.body,
+      req.user._id
+    );
     if (updatedContact) {
       res.status(200).json(updatedContact);
     } else {
