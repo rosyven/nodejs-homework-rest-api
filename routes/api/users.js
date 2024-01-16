@@ -7,6 +7,8 @@ const {
   logout,
   getCurrentUser,
   updateAvatar,
+  verifyEmail,
+  resendVerificationEmail,
 } = require("../../controllers/users");
 const authMiddleware = require("../../middlewares/authMiddleware");
 const upload = require("../../middlewares/uploadMiddleware");
@@ -19,6 +21,10 @@ const registrationSchema = Joi.object({
 const loginSchema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().min(6).required(),
+});
+
+const emailSchema = Joi.object({
+  email: Joi.string().email().required(),
 });
 
 router.post("/register", async (req, res, next) => {
@@ -46,5 +52,17 @@ router.get("/current", authMiddleware, async (req, res, next) => {
 });
 
 router.patch("/avatars", authMiddleware, upload.single("avatar"), updateAvatar);
+
+router.get("/verify/:verificationToken", async (req, res, next) => {
+  await verifyEmail(req, res);
+});
+
+router.post("/verify", async (req, res, next) => {
+  const { error } = emailSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.message });
+  }
+  await resendVerificationEmail(req, res);
+});
 
 module.exports = router;
