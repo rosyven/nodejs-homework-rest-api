@@ -6,8 +6,10 @@ const {
   login,
   logout,
   getCurrentUser,
+  updateAvatar,
 } = require("../../controllers/users");
 const authMiddleware = require("../../middlewares/authMiddleware");
+const upload = require("../../middlewares/uploadMiddleware");
 
 const registrationSchema = Joi.object({
   email: Joi.string().email().required(),
@@ -42,5 +44,7 @@ router.post("/logout", authMiddleware, async (req, res, next) => {
 router.get("/current", authMiddleware, async (req, res, next) => {
   await getCurrentUser(req, res);
 });
+
+router.patch("/avatars", authMiddleware, upload.single("avatar"), updateAvatar);
 
 module.exports = router;

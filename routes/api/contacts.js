@@ -73,7 +73,7 @@ router.post("/", async (req, res, next) => {
 router.delete("/:contactId", async (req, res, next) => {
   const { contactId } = req.params;
   try {
-    const result = await removeContact(contactId);
+    const result = await removeContact(contactId, req.user._id);
     if (result) {
       res.status(200).json({ message: "contact deleted" });
     } else {
