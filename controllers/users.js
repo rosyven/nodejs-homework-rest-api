@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/user");
 const jwt = require("jsonwebtoken");
-const { JWT_SECRET } = process.env;
+const { JWT_SECRET, BASE_URL } = process.env;
 const gravatar = require("gravatar");
 const jimp = require("jimp");
 const path = require("path");
@@ -31,7 +31,7 @@ const register = async (req, res) => {
     const mail = {
       to: email,
       subject: "Verify email",
-      html: `<a target="_blank" href="http://localhost:3000/api/users/verify/${verificationToken}">Click verify email</a>`,
+      html: `<a target="_blank" href="${BASE_URL}/api/users/verify/${verificationToken}">Click to verify email</a>`,
     };
     await sendEmail(mail);
 
@@ -55,11 +55,6 @@ const verifyEmail = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
-    }
-    if (user.verify) {
-      return res
-        .status(400)
-        .json({ message: "Verification has already been passed" });
     }
 
     await User.findByIdAndUpdate(user._id, {
@@ -91,13 +86,10 @@ const resendVerificationEmail = async (req, res) => {
         .json({ message: "Verification has already been passed" });
     }
 
-    const verificationToken = nanoid();
-    await User.findByIdAndUpdate(user._id, { verificationToken });
-
     const mail = {
       to: email,
       subject: "Verify email",
-      html: `<a target="_blank" href="http://localhost:3000/users/verify/${verificationToken}">Click to verify email</a>`,
+      html: `<a target="_blank" href="${BASE_URL}/api/users/verify/${user.verificationToken}">Click to verify email</a>`,
     };
     await sendEmail(mail);
 
@@ -113,9 +105,12 @@ const login = async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
 
-    if (!user) res.status(401).json({ message: "Email or password is wrong" });
-    if (!user.verify)
-      res.status(401).json({ message: "Email is not verified" });
+    if (!user) {
+      return res.status(401).json({ message: "Email or password is wrong" });
+    }
+    if (!user.verify) {
+      return res.status(401).json({ message: "Email is not verified" });
+    }
 
     const passwordCompare = await bcrypt.compare(password, user.password);
     if (!passwordCompare)
